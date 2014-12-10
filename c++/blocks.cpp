@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <mutex>
 
-#include "crypto/sha2.h"
+#include "shadouble.h"
 #include "utils.h"
 
 static std::mutex hashes_mutex;
@@ -20,9 +20,8 @@ bool got_block_has_been_relayed(const std::vector<unsigned char>& hash) {
 
 static inline void doubleDoubleHash(std::vector<unsigned char>& first, std::vector<unsigned char>& second) {
 	assert(first.size() == 32);
-	CSHA256 hash; // Probably not BE-safe
+	CSHA256Double hash; // Probably not BE-safe
 	hash.Write(&first[0], first.size()).Write(&second[0], second.size()).Finalize(&first[0]);
-	hash.Reset().Write(&first[0], 32).Finalize(&first[0]);
 }
 
 const char* is_block_sane(const std::vector<unsigned char>& hash, std::vector<unsigned char>::const_iterator readit, std::vector<unsigned char>::const_iterator end) {
@@ -62,9 +61,8 @@ const char* is_block_sane(const std::vector<unsigned char>& hash, std::vector<un
 			move_forward(readit, 4, end);
 
 			hashlist.emplace_back(32);
-			CSHA256 hash; // Probably not BE-safe
+			CSHA256Double hash; // Probably not BE-safe
 			hash.Write(&(*txstart), readit - txstart).Finalize(&hashlist.back()[0]);
-			hash.Reset().Write(&hashlist.back()[0], 32).Finalize(&hashlist.back()[0]);
 		}
 
 		uint32_t stepCount = 1, lastMax = hashlist.size() - 1;
@@ -107,9 +105,8 @@ bool recv_headers_msg_from_trusted(const std::vector<unsigned char> headers) {
 				return wasUseful;
 
 			std::vector<unsigned char> fullhash(32);
-			CSHA256 hash; // Probably not BE-safe
+			CSHA256Double hash; // Probably not BE-safe
 			hash.Write(&(*(it - 81)), 80).Finalize(&fullhash[0]);
-			hash.Reset().Write(&fullhash[0], 32).Finalize(&fullhash[0]);
 			wasUseful |= hashesSeen.insert(fullhash).second;
 		}
 

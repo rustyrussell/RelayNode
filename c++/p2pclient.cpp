@@ -1,6 +1,6 @@
 #include "p2pclient.h"
 #include "utils.h"
-#include "crypto/sha2.h"
+#include "shadouble.h"
 
 #include <thread>
 #include <string.h>
@@ -105,9 +105,8 @@ void P2PRelayer::net_process() {
 			return reconnect("failed to read message");
 
 		unsigned char fullhash[32];
-		CSHA256 hash;
+		CSHA256Double hash;
 		hash.Write(&(*msg)[prependedHeaderSize], header.length).Finalize(fullhash);
-		hash.Reset().Write(fullhash, sizeof(fullhash)).Finalize(fullhash);
 		if (memcmp((char*)fullhash, header.checksum, sizeof(header.checksum)))
 			return reconnect("got invalid message checksum");
 
@@ -157,9 +156,8 @@ void P2PRelayer::net_process() {
 			req.insert(req.end(), 1, 1);
 
 			std::vector<unsigned char> fullhash(32);
-			CSHA256 hash;
+			CSHA256Double hash;
 			hash.Write(&(*msg)[msg->size() - 81], 80).Finalize(&fullhash[0]);
-			hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 			req.insert(req.end(), fullhash.begin(), fullhash.end());
 			req.insert(req.end(), 32, 0);
 
@@ -191,9 +189,8 @@ void P2PRelayer::receive_transaction(const std::shared_ptr<std::vector<unsigned 
 		req.insert(req.end(), (unsigned char*)&MSG_TX, ((unsigned char*)&MSG_TX) + sizeof(MSG_TX));
 
 		std::vector<unsigned char> fullhash(32);
-		CSHA256 hash; // Probably not BE-safe
+		CSHA256Double hash; // Probably not BE-safe
 		hash.Write(&(*tx)[0], tx->size()).Finalize(&fullhash[0]);
-		hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 		req.insert(req.end(), fullhash.begin(), fullhash.end());
 
 		send_message("getdata", &req[0], 37);

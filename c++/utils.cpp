@@ -1,5 +1,5 @@
 #include "utils.h"
-#include "crypto/sha2.h"
+#include "shadouble.h"
 
 #include <vector>
 #include <string.h>
@@ -149,8 +149,7 @@ void prepare_message(const char* command, unsigned char* headerAndData, size_t d
 	header->magic = BITCOIN_MAGIC;
 
 	unsigned char fullhash[32];
-	CSHA256 hash; // Probably not BE-safe
+	CSHA256Double hash; // Probably not BE-safe
 	hash.Write(headerAndData + sizeof(struct bitcoin_msg_header), datalen).Finalize(fullhash);
-	hash.Reset().Write(fullhash, sizeof(fullhash)).Finalize(fullhash);
 	memcpy(header->checksum, fullhash, sizeof(header->checksum));
 }

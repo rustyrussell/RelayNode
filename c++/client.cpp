@@ -19,7 +19,7 @@
 #define BITCOIN_UA_LENGTH 24
 #define BITCOIN_UA {'/', 'R', 'e', 'l', 'a', 'y', 'N', 'e', 't', 'w', 'o', 'r', 'k', 'C', 'l', 'i', 'e', 'n', 't', ':', '4', '2', '/', '\0'}
 
-#include "crypto/sha2.h"
+#include "shadouble.h"
 #include "flaggedarrayset.h"
 #include "relayprocess.h"
 #include "utils.h"
@@ -174,9 +174,8 @@ private:
 				provide_block(*std::get<1>(res));
 
 				std::vector<unsigned char> fullhash(32);
-				CSHA256 hash; // Probably not BE-safe
+				CSHA256Double hash; // Probably not BE-safe
 				hash.Write(&(*std::get<1>(res))[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-				hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 				struct tm tm;
 				time_t now = time(NULL);
 				gmtime_r(&now, &tm);
@@ -258,9 +257,8 @@ public:
 				printf("Error sending end block message to relay server\n");
 			else {
 				std::vector<unsigned char> fullhash(32);
-				CSHA256 hash; // Probably not BE-safe
+				CSHA256Double hash; // Probably not BE-safe
 				hash.Write(&block[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-				hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 				for (unsigned int i = 0; i < fullhash.size(); i++)
 					printf("%02x", fullhash[fullhash.size() - i - 1]);
 				printf(" sent, size %lu with %lu bytes on the wire\n", (unsigned long)block.size(), (unsigned long)compressed_block->size());

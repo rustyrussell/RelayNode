@@ -15,7 +15,7 @@
 #define BITCOIN_UA_LENGTH 23
 #define BITCOIN_UA {'/', 'R', 'e', 'l', 'a', 'y', 'N', 'e', 't', 'w', 'o', 'r', 'k', 'S', 'e', 'r', 'v', 'e', 'r', ':', '4', '2', '/'}
 
-#include "crypto/sha2.h"
+#include "shadouble.h"
 #include "flaggedarrayset.h"
 #include "relayprocess.h"
 #include "utils.h"
@@ -122,9 +122,8 @@ private:
 				gettimeofday(&finish_read, NULL);
 
 				std::vector<unsigned char> fullhash(32);
-				CSHA256 hash; // Probably not BE-safe
+				CSHA256Double hash; // Probably not BE-safe
 				hash.Write(&(*std::get<1>(res))[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-				hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 				blocksAlreadySeen.insert(fullhash);
 
 				struct timeval *finish_send = provide_block(this, std::get<1>(res));
@@ -329,9 +328,8 @@ int main(int argc, char** argv) {
 						if (bytes.size() < sizeof(struct bitcoin_msg_header) + 80)
 							return;
 						std::vector<unsigned char> fullhash(32);
-						CSHA256 hash; // Probably not BE-safe
+						CSHA256Double hash; // Probably not BE-safe
 						hash.Write(&bytes[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-						hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 
 						if (got_block_has_been_relayed(fullhash))
 							return;
@@ -380,9 +378,8 @@ int main(int argc, char** argv) {
 						gettimeofday(&send_start, NULL);
 
 						std::vector<unsigned char> fullhash(32);
-						CSHA256 hash; // Probably not BE-safe
+						CSHA256Double hash; // Probably not BE-safe
 						hash.Write(&bytes[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-						hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 
 						const char* insane = is_block_sane(fullhash, bytes.begin() + sizeof(struct bitcoin_msg_header), bytes.end());
 						if (insane) {
@@ -420,9 +417,8 @@ int main(int argc, char** argv) {
 			if (bytes->size() < sizeof(struct bitcoin_msg_header) + 80)
 				return (struct timeval*)NULL;
 			std::vector<unsigned char> fullhash(32);
-			CSHA256 hash; // Probably not BE-safe
+			CSHA256Double hash; // Probably not BE-safe
 			hash.Write(&(*bytes)[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-			hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 
 			const char* insane = is_block_sane(fullhash, bytes->begin() + sizeof(struct bitcoin_msg_header), bytes->end());
 			if (insane) {

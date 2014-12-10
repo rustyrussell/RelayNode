@@ -20,7 +20,7 @@
 #define BITCOIN_UA_LENGTH 22
 #define BITCOIN_UA {'/', 'R', 'e', 'l', 'a', 'y', 'N', 'e', 't', 'w', 'o', 'r', 'k', 'O', 'u', 't', 'b', 'o', 'u', 'n', 'd', '/'}
 
-#include "crypto/sha2.h"
+#include "shadouble.h"
 #include "utils.h"
 #include "p2pclient.h"
 
@@ -73,9 +73,8 @@ int main(int argc, char** argv) {
 						inbound->receive_block(bytes);
 
 						std::vector<unsigned char> fullhash(32);
-						CSHA256 hash; // Probably not BE-safe
+						CSHA256Double hash; // Probably not BE-safe
 						hash.Write(&bytes[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-						hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 						for (unsigned int i = 0; i < fullhash.size(); i++)
 							printf("%02x", fullhash[fullhash.size() - i - 1]);
 						printf(" recv'd %s %lu\n", argv[1], uint64_t(tv.tv_sec)*1000 + uint64_t(tv.tv_usec)/1000);

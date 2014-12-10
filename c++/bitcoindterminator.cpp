@@ -16,7 +16,7 @@
 #define BITCOIN_UA_LENGTH 27 + 9
 #define BITCOIN_UA {'/', 'R', 'e', 'l', 'a', 'y', 'N', 'e', 't', 'w', 'o', 'r', 'k', 'T', 'e', 'r', 'm', 'i', 'n', 'a', 't', 'o', 'r', ':', '4', '2', '/', '0', '0', '0', '0', '0', '0', '0', '/', '\0'}
 
-#include "crypto/sha2.h"
+#include "shadouble.h"
 #include "mruset.h"
 #include "utils.h"
 #include "serverprocess.h"
@@ -70,9 +70,8 @@ private:
 				return disconnect("failed to read message");
 
 			unsigned char fullhash[32];
-			CSHA256 hash;
+			CSHA256Double hash;
 			hash.Write(&(*msg)[sizeof(struct bitcoin_msg_header)], header.length).Finalize(fullhash);
-			hash.Reset().Write(fullhash, sizeof(fullhash)).Finalize(fullhash);
 			if (memcmp((char*)fullhash, header.checksum, sizeof(header.checksum)))
 				return disconnect("got invalid message checksum");
 
@@ -306,9 +305,8 @@ int main(int argc, char** argv) {
 			if (bytes->size() < 80)
 				return;
 			std::vector<unsigned char> fullhash(32);
-			CSHA256 hash; // Probably not BE-safe
+			CSHA256Double hash; // Probably not BE-safe
 			hash.Write(&(*bytes)[sizeof(struct bitcoin_msg_header)], 80).Finalize(&fullhash[0]);
-			hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 
 			{
 				std::lock_guard<std::mutex> lock(list_mutex);
@@ -334,9 +332,8 @@ int main(int argc, char** argv) {
 	std::function<void (P2PConnection*, std::shared_ptr<std::vector<unsigned char> >&)> relayTx =
 		[&](P2PConnection* from, std::shared_ptr<std::vector<unsigned char> >& bytes) {
 			std::vector<unsigned char> fullhash(32);
-			CSHA256 hash; // Probably not BE-safe
+			CSHA256Double hash; // Probably not BE-safe
 			hash.Write(&(*bytes)[sizeof(struct bitcoin_msg_header)], bytes->size() - sizeof(struct bitcoin_msg_header)).Finalize(&fullhash[0]);
-			hash.Reset().Write(&fullhash[0], fullhash.size()).Finalize(&fullhash[0]);
 
 			std::lock_guard<std::mutex> lock(list_mutex);
 			std::set<P2PConnection*> *set;

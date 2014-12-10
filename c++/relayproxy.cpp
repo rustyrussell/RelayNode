@@ -10,7 +10,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 
-#include "crypto/sha2.h"
+#include "shadouble.h"
 #include "flaggedarrayset.h"
 #include "relayprocess.h"
 #include "utils.h"
