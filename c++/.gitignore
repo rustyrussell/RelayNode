@@ -1,0 +1,6 @@
+*.o
+relaynetworkclient
+relaynetworkoutbound
+relaynetworkproxy
+relaynetworkserver
+relaynetworkterminator
