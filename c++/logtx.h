@@ -22,5 +22,8 @@ public:
 	void unknown_tx(const unsigned char *tx, uint32_t size) const;
 	// We knew about these txs, but they weren't in the block.
 	void unused_txs(FlaggedArraySet &txs) const;
+
+	// They gave us a tx.
+	void received_tx(const std::vector<unsigned char> &tx) const;
 };
 #endif // RELAYNODE_LOGTX_H

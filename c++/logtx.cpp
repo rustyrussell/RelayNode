@@ -73,3 +73,17 @@ void LogTx::unused_txs(FlaggedArraySet &txs) const
 			unused_tx(*tx);
 		});
 }
+
+void LogTx::received_tx(const std::vector<unsigned char> &tx) const
+{
+	if (!active)
+		return;
+
+	CSHA256Double hash;
+	unsigned char txid[CSHA256::OUTPUT_SIZE];
+	char hex[sizeof(txid) * 2 + 1];
+
+	hash.Write(tx.data(), tx.size()).Finalize(txid);
+	to_be_hex(hex, txid);
+	std::cout << "Received tx " << hex << std::endl;
+}

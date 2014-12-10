@@ -199,6 +199,7 @@ private:
 					return reconnect("failed to read loose transaction data");
 
 				recv_tx_cache.add(tx, message_size > MAX_RELAY_TRANSACTION_BYTES);
+				log.received_tx(*tx);
 				provide_transaction(tx);
 				printf("Received transaction of size %u from relay server\n", message_size);
 			} else
