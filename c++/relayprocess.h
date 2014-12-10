@@ -11,6 +11,8 @@
 	#include <arpa/inet.h>
 #endif
 
+#include "logtx.h"
+
 #define RELAY_DECLARE_CLASS_VARS \
 private: \
 	FlaggedArraySet recv_tx_cache, send_tx_cache; \
@@ -83,7 +85,7 @@ private: \
 		return compressed_block; \
 	} \
  \
-	std::tuple<uint32_t, std::shared_ptr<std::vector<unsigned char> >, const char*> decompressRelayBlock(int sock, uint32_t message_size) { \
+std::tuple<uint32_t, std::shared_ptr<std::vector<unsigned char> >, const char*> decompressRelayBlock(int sock, uint32_t message_size, const LogTx &log) { \
 		if (message_size > 100000) \
 			return std::make_tuple(0, std::shared_ptr<std::vector<unsigned char> >(NULL), "got a BLOCK message with far too many transactions"); \
  \
@@ -95,6 +97,7 @@ private: \
 		if (read_all(sock, (char*)&(*block)[sizeof(bitcoin_msg_header)], 80) != 80) \
 			return std::make_tuple(0, std::shared_ptr<std::vector<unsigned char> >(NULL), "failed to read block header"); \
  \
+		log.processing_block(&(*block)[sizeof(bitcoin_msg_header)]); \
 		auto vartxcount = varint(message_size); \
 		block->insert(block->end(), vartxcount.begin(), vartxcount.end()); \
  \
@@ -121,6 +124,7 @@ private: \
 				block->insert(block->end(), tx_size.i, 0); \
 				if (read_all(sock, (char*)&(*block)[block->size() - tx_size.i], tx_size.i) != int64_t(tx_size.i)) \
 					return std::make_tuple(0, std::shared_ptr<std::vector<unsigned char> >(NULL), "failed to read transaction data"); \
+				log.unknown_tx(&(*block)[block->size() - tx_size.i], tx_size.i); \
 				wire_bytes += 3 + tx_size.i; \
 			} else { \
 				std::shared_ptr<std::vector<unsigned char> > transaction_data = recv_tx_cache.remove(index); \

@@ -116,7 +116,7 @@ private:
 				struct timeval start, finish_read;
 
 				gettimeofday(&start, NULL);
-				auto res = decompressRelayBlock(sock, message_size);
+				auto res = decompressRelayBlock(sock, message_size, LogTx(false));
 				if (std::get<2>(res))
 					return disconnect(std::get<2>(res));
 				gettimeofday(&finish_read, NULL);

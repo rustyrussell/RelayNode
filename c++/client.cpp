@@ -42,16 +42,18 @@ private:
 	const std::function<void (std::shared_ptr<std::vector<unsigned char> >&)> provide_transaction;
 
 	int sock;
+	LogTx log;
 	std::mutex send_mutex;
 	std::thread* net_thread, *new_thread;
 
 public:
 	RelayNetworkClient(const char* serverHostIn,
 						const std::function<void (std::vector<unsigned char>&)>& provide_block_in,
-						const std::function<void (std::shared_ptr<std::vector<unsigned char> >&)>& provide_transaction_in)
+						const std::function<void (std::shared_ptr<std::vector<unsigned char> >&)>& provide_transaction_in,
+					   const LogTx &log_in)
 			: RELAY_DECLARE_CONSTRUCTOR_EXTENDS,
 			server_host(serverHostIn), provide_block(provide_block_in), provide_transaction(provide_transaction_in),
-			sock(0), net_thread(NULL), new_thread(NULL) {
+			sock(0), log(log_in), net_thread(NULL), new_thread(NULL) {
 		send_mutex.lock();
 		new_thread = new std::thread(do_connect, this);
 		send_mutex.unlock();
@@ -167,9 +169,11 @@ private:
 				else
 					return reconnect("got MAX_VERSION of same version as us");
 			} else if (header.type == BLOCK_TYPE) {
-				auto res = decompressRelayBlock(sock, message_size);
+				auto res = decompressRelayBlock(sock, message_size, log);
 				if (std::get<2>(res))
 					return reconnect(std::get<2>(res));
+
+				log.unused_txs(recv_tx_cache);
 
 				provide_block(*std::get<1>(res));
 
@@ -289,8 +293,17 @@ private:
 
 
 int main(int argc, char** argv) {
+	const char *progname = argv[0];
+	LogTx log(false);
+
+	if (argv[1] && !strcmp(argv[1], "--log-block-txids")) {
+		log = LogTx(true);
+		argc--;
+		argv++;
+	}
+
 	if (argc != 4) {
-		printf("USAGE: %s RELAY_SERVER BITCOIND_ADDRESS BITCOIND_PORT\n", argv[0]);
+		printf("USAGE: %s [--log-block-txids] RELAY_SERVER BITCOIND_ADDRESS BITCOIND_PORT\n", progname);
 		return -1;
 	}
 
@@ -306,7 +319,8 @@ int main(int argc, char** argv) {
 					[&](std::shared_ptr<std::vector<unsigned char> >& bytes) { relayClient->receive_transaction(bytes); });
 	relayClient = new RelayNetworkClient(argv[1],
 										[&](std::vector<unsigned char>& bytes) { p2p.receive_block(bytes); },
-										[&](std::shared_ptr<std::vector<unsigned char> >& bytes) { p2p.receive_transaction(bytes); });
+										 [&](std::shared_ptr<std::vector<unsigned char> >& bytes) { p2p.receive_transaction(bytes); },
+										 log);
 
 	while (true) { sleep(1000); }
 }
